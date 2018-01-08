@@ -1,0 +1,5 @@
+Oct 10, 2017
+
+created a map project.
+connected Android phone.
+applied maps api key.
