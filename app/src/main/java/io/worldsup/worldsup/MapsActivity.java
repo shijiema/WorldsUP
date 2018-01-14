@@ -9,6 +9,9 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -178,5 +181,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.moveCamera(update);
 
     }
+    private void hideSoftKeyboard(View v){
+        InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(v.getWindowToken(),0);
+    }
+    public void gotoLocate(View view) {
+        hideSoftKeyboard(view);
 
+        TextView tv = (TextView) findViewById(R.id.editLocation);
+        String searchString = tv.getText().toString();
+        Toast.makeText(this, "Searching for: " + searchString, Toast.LENGTH_SHORT).show();
+    }
 }
