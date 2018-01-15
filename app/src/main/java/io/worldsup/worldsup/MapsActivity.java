@@ -2,6 +2,8 @@ package io.worldsup.worldsup;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -31,9 +33,13 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+    private final int ZOOM_DEFAULT=15;
     private static final String TAG = MapsActivity.class.getSimpleName();
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
@@ -185,11 +191,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         InputMethodManager imm = (InputMethodManager)getSystemService(INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(),0);
     }
-    public void gotoLocate(View view) {
+
+    /**
+     * center the map to a location
+     * @param lat
+     * @param lng
+     * @param zoom
+     */
+    private void gotoLocation(double lat, double lng,float zoom){
+        Objects.requireNonNull(lat);
+        Objects.requireNonNull(lng);
+        LatLng latLng = new LatLng(lat,lng);
+        CameraUpdate cameraUpdate =  CameraUpdateFactory.newLatLngZoom(latLng,zoom);
+        mMap.moveCamera(cameraUpdate);
+    }
+    public void gotoLocate(View view)  {
         hideSoftKeyboard(view);
 
         TextView tv = (TextView) findViewById(R.id.editLocation);
         String searchString = tv.getText().toString();
-        Toast.makeText(this, "Searching for: " + searchString, Toast.LENGTH_SHORT).show();
+        if(searchString==null ||"".equals(searchString.trim()))return;
+
+        //use geocoder to parse out address or name to gps coordinations
+        Geocoder gcder = new Geocoder(this);
+        try {
+            List<Address> listOfAddress = gcder.getFromLocationName(searchString,1);
+            if(listOfAddress!=null && listOfAddress.size()>0){
+                Address addr = listOfAddress.get(0);
+                String locality = addr.getLocality();
+                Toast.makeText(this, "Found: " + locality, Toast.LENGTH_SHORT).show();
+                gotoLocation(addr.getLatitude(),addr.getLongitude(),ZOOM_DEFAULT);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
