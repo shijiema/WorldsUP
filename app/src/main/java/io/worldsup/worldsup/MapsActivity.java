@@ -27,7 +27,9 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -63,6 +65,57 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
     }
+    private void setInfoWindowAdaptor(GoogleMap map){
+        map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                View info_window = getLayoutInflater().inflate(R.layout.info_window,null);
+
+                TextView infoSummary = info_window.findViewById(R.id.textSummary);
+                infoSummary.setText("information summary");
+                return null;
+            }
+        });
+    }
+    /**
+     * long clicking will bring up question asking windows.
+     * I will make a draggable marker for user to drop to a place/cell to ask question too
+     * @param map
+     */
+    private void setLongClickAdapter(GoogleMap map){
+        map.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                MarkerOptions optns = createQuestionMarker(latLng,"Location Related Questions");
+                mMap.addMarker(optns);
+                //then display question capture window
+            }
+        });
+    }
+    private void setMarkerClickAdapter(GoogleMap map){
+        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                Toast.makeText(MapsActivity.this, "Clicked on: " + marker.toString()+". this also brings infor window", Toast.LENGTH_SHORT).show();
+                //if(marker.isInfoWindowShown()){marker.hideInfoWindow();}
+                return false;//true will stop propagating the event and information will not be displayed
+            }
+        });
+    }
+    private void setInfoWindowClickAdapter(GoogleMap map){
+        map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                Toast.makeText(MapsActivity.this, "Info windows Clicked: this will bring up detail window.", Toast.LENGTH_SHORT).show();
+                marker.hideInfoWindow();
+            }
+        });
+    }
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -76,6 +129,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         getDeviceLocation();
+        setMarkerClickAdapter(mMap);
+        setInfoWindowClickAdapter(mMap);
+        setLongClickAdapter(mMap);
+        setInfoWindowAdaptor(mMap);
     }
 
     /**
@@ -177,7 +234,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         mCurrentLocation.getLatitude(),
                         mCurrentLocation.getLongitude()
                 );
-                marker =new MarkerOptions().position(curGps).title(mCurrentLocation.toString());
+                marker =createQuestionMarker(curGps,"Touch");
+                marker.snippet("to ask location related questions");
                 update = CameraUpdateFactory.newLatLngZoom(
                         curGps, 15
                 );
@@ -219,11 +277,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(listOfAddress!=null && listOfAddress.size()>0){
                 Address addr = listOfAddress.get(0);
                 String locality = addr.getLocality();
-                Toast.makeText(this, "Found: " + locality, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "Found: " + locality, Toast.LENGTH_SHORT).show();
                 gotoLocation(addr.getLatitude(),addr.getLongitude(),ZOOM_DEFAULT);
+                final Marker marker = mMap.addMarker(createInfoMarker(new LatLng(addr.getLatitude(), addr.getLongitude()), locality==null?addr.getAddressLine(0):locality));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    private MarkerOptions createInfoMarker(LatLng latLng,String title){
+        Objects.requireNonNull(latLng);
+        MarkerOptions marker = new MarkerOptions().title(title).position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+        marker.snippet("300 piece of information. Click to view");
+        return marker;
+    }
+    private MarkerOptions createQuestionMarker(LatLng latLng,String title){
+        Objects.requireNonNull(latLng);
+        MarkerOptions marker = new MarkerOptions().title(title).position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+        marker.snippet("100 questions waiting for answer. Click to answer.");
+        return marker;
+    }
+    /**
+     * zoom the map to view detail question or information
+     * group questions and informations into 2 different markers
+     * split screen into 16 areas, detail information is viewiable when number of information is less than 100. if at biggest zoom level already, scroll the information
+     * within each areas, display two markers for questions and information.
+     * question can be selected to answer
+     * information can be liked or disliked trust or distrust. being distrusted by 5 person will remove the information.
+     * question or information lives only for one day
+     */
 }
