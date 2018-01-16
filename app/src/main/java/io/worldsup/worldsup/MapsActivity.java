@@ -78,7 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 TextView infoSummary = info_window.findViewById(R.id.textSummary);
                 infoSummary.setText("information summary");
-                return null;
+                return infoSummary;
             }
         });
     }
