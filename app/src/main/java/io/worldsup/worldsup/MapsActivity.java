@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -75,10 +76,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public View getInfoContents(Marker marker) {
                 View info_window = getLayoutInflater().inflate(R.layout.info_window,null);
-
                 TextView infoSummary = info_window.findViewById(R.id.textSummary);
                 infoSummary.setText("information summary");
-                return infoSummary;
+                ImageView iv = info_window.findViewById(R.id.imageView);
+                iv.setImageResource(R.drawable.ic_anwser);
+                marker.setAnchor(0.5f,0.5f);
+                return info_window;
             }
         });
     }
@@ -101,8 +104,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
+                //if(marker.isInfoWindowShown()){marker.hideInfoWindow();return true;}
+
                 Toast.makeText(MapsActivity.this, "Clicked on: " + marker.toString()+". this also brings infor window", Toast.LENGTH_SHORT).show();
-                //if(marker.isInfoWindowShown()){marker.hideInfoWindow();}
                 return false;//true will stop propagating the event and information will not be displayed
             }
         });
