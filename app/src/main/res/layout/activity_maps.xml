@@ -32,7 +32,8 @@
             android:layout_toRightOf="@+id/textLocationLabel"
             android:layout_toStartOf="@+id/buttonGo"
             android:ems="10"
-            android:inputType="textCapWords">
+            android:inputType="textCapWords"
+            android:imeOptions="actionDone" >
 
             <requestFocus />
         </EditText>
@@ -43,7 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/editLocation"
             android:layout_alignParentEnd="true"
-            android:onClick="gotoLocate"
+            android:onClick="gotoUserNamedPlace"
             android:text="@string/goto_label" />
     </RelativeLayout>
 

@@ -27,7 +27,7 @@ public class MapStateManager {
 
         editor.putString("latitude",""+cameraPosition.target.latitude);
         editor.putString("longitude",""+cameraPosition.target.longitude);
-        editor.putFloat("zoon",cameraPosition.zoom);
+        editor.putFloat("zoom",cameraPosition.zoom);
         editor.putFloat("tilt",cameraPosition.tilt);
         editor.putFloat("bearing",cameraPosition.bearing);
         editor.putInt("mapType",map.getMapType());
