@@ -29,6 +29,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -41,7 +42,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+import io.worldsup.worldsup.state.MapStateManager;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+    private MapStateManager stateMgr = null;
     private final int ZOOM_DEFAULT=15;
     private static final String TAG = MapsActivity.class.getSimpleName();
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 1000;
@@ -65,6 +69,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        stateMgr = new MapStateManager(this);
     }
     private void setInfoWindowAdaptor(GoogleMap map){
         map.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
@@ -132,7 +137,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        getDeviceLocation();
+        if(stateMgr.getCameraPosition()==null) {
+            getDeviceLocation();
+        }else{
+            restoreMapState();
+        }
         setMarkerClickAdapter(mMap);
         setInfoWindowClickAdapter(mMap);
         setLongClickAdapter(mMap);
@@ -300,6 +309,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         MarkerOptions marker = new MarkerOptions().title(title).position(latLng).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
         marker.snippet("100 questions waiting for answer. Click to answer.");
         return marker;
+    }
+//do this using onSaveInstanceState,(onCreate or onRestoreInstanceState)
+
+    @Override
+    protected void onPause() {
+        stateMgr.saveMapState(mMap);
+        super.onPause();
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        restoreMapState();
+    }
+    private void restoreMapState(){
+        CameraPosition cameraPosition = stateMgr.getCameraPosition();
+        if(cameraPosition!=null){
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
+            if(mMap!=null) {
+                mMap.moveCamera(cameraUpdate);
+            }
+        }
     }
     /**
      * zoom the map to view detail question or information
